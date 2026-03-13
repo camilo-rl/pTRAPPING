@@ -8,8 +8,9 @@ Description: Provides a toolkit for the analysis of PhosphoTRAP
     and visualization. Implements streamlined workflows and offers functions for
     generating publication-ready tables and plots in few lines of code, enabling reproducible and
     efficient exploration of PhosphoTRAP datasets.
-License: 
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
- 
+URL: https://github.com/camilo-rl/pTRAPING
+BugReports: https://github.com/camilo-rl/pTRAPING/issues
