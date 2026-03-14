@@ -3,11 +3,10 @@ Title: A Suite of Functions for the Analyses of PhosphoTRAP Data in R
 Version: 0.0.0.9000
 Authors@R: 
     person("Camilo", "Rodríguez", , "camo.rodriguez@gmail.com", role = c("aut", "cre"))
-Description: Provides a toolkit for the analysis of PhosphoTRAP
-    sequencing data, including preprocessing, differential expression analysis,
-    and visualization. Implements streamlined workflows and offers functions for
-    generating publication-ready tables and plots in few lines of code, enabling reproducible and
-    efficient exploration of PhosphoTRAP datasets.
+Description: Provides a toolkit for the analysis of PhosphoTRAP sequencing data, including preprocessing, 
+    differential expression analysis, and visualization. Implements streamlined workflows and offers functions for
+    generating publication-ready tables and plots in few lines of code, enabling reproducible and efficient 
+    exploration of PhosphoTRAP datasets.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
