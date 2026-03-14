@@ -1,3 +1,23 @@
 {
-    "positron.r.useNativePipe": true
+    "positron.r.useNativePipe": true,
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#654b54",
+        "activityBar.background": "#654b54",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#0d1808",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#654b54",
+        "statusBar.background": "#48353c",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#654b54",
+        "statusBarItem.remoteBackground": "#48353c",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#48353c",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#48353c99",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#48353c"
 }
