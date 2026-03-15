@@ -1,23 +1,23 @@
 {
     "positron.r.useNativePipe": true,
     "workbench.colorCustomizations": {
-        "activityBar.activeBackground": "#654b54",
-        "activityBar.background": "#654b54",
+        "activityBar.activeBackground": "#246daa",
+        "activityBar.background": "#246daa",
         "activityBar.foreground": "#e7e7e7",
         "activityBar.inactiveForeground": "#e7e7e799",
-        "activityBarBadge.background": "#0d1808",
-        "activityBarBadge.foreground": "#e7e7e7",
+        "activityBarBadge.background": "#e37bb4",
+        "activityBarBadge.foreground": "#15202b",
         "commandCenter.border": "#e7e7e799",
-        "sash.hoverBorder": "#654b54",
-        "statusBar.background": "#48353c",
+        "sash.hoverBorder": "#246daa",
+        "statusBar.background": "#1b5280",
         "statusBar.foreground": "#e7e7e7",
-        "statusBarItem.hoverBackground": "#654b54",
-        "statusBarItem.remoteBackground": "#48353c",
+        "statusBarItem.hoverBackground": "#246daa",
+        "statusBarItem.remoteBackground": "#1b5280",
         "statusBarItem.remoteForeground": "#e7e7e7",
-        "titleBar.activeBackground": "#48353c",
+        "titleBar.activeBackground": "#1b5280",
         "titleBar.activeForeground": "#e7e7e7",
-        "titleBar.inactiveBackground": "#48353c99",
+        "titleBar.inactiveBackground": "#1b528099",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "peacock.color": "#48353c"
+    "peacock.color": "#1b5280"
 }
