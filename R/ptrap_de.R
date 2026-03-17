@@ -40,8 +40,15 @@
 #'   ratio test via `glmFit` + `glmLRT`, default) or `"QLF"` (quasi-likelihood
 #'   F-test via `glmQLFit` + `glmQLFTest`). `"QLF"` is generally more
 #'   conservative and recommended when the number of samples per group is small.
+#' @param ngenes.out Number of top genes (sorted by p-value) to include in the
+#'   output when `kable.out = TRUE`. Default is `20`.
+#' @param kable.out Logical. If `TRUE`, returns a `kableExtra` HTML table of
+#'   the top `ngenes.out` genes instead of the full tibble. Requires the
+#'   `kableExtra` package. Default is `FALSE`.
 #'
-#' @return A tibble with one row per gene, sorted by p-value, containing:
+#' @return When `kable.out = FALSE` (default), a tibble with one row per gene,
+#'   sorted by p-value. When `kable.out = TRUE`, an HTML `kableExtra` table of
+#'   the top `ngenes.out` genes. The tibble contains:
 #'   \describe{
 #'     \item{Gene}{Gene identifier from `gene_ids`.}
 #'     \item{logFC}{Log2 fold change (IP vs INPUT).}
@@ -90,9 +97,11 @@
 #'
 #' @importFrom edgeR DGEList filterByExpr calcNormFactors estimateDisp
 #'   glmFit glmLRT glmQLFit glmQLFTest topTags
-#' @importFrom dplyr filter mutate case_when relocate
+#' @importFrom dplyr filter mutate case_when relocate slice_head
 #' @importFrom tibble as_tibble
 #' @importFrom stats as.formula model.matrix
+#' @importFrom knitr kable
+#' @importFrom kableExtra kable_classic row_spec column_spec
 
 ptrap_de <- function(
   counts_mat,
@@ -109,7 +118,9 @@ ptrap_de <- function(
   input_level   = "INPUT",
   lfc_threshold = 1,
   fdr_threshold = 0.05,
-  test_method   = c("LRT", "QLF")
+  test_method   = c("LRT", "QLF"),
+  ngenes.out    = 20,
+  kable.out     = FALSE
 ) {
 
   test_method <- match.arg(test_method)
@@ -197,6 +208,21 @@ ptrap_de <- function(
       )
     ) %>%
     relocate(Gene)
+
+  if (kable.out) {
+    return(
+      results %>%
+        slice_head(n = ngenes.out) %>%
+        kable(
+          digits = 2,
+          table.attr = 'data-quarto-disable-processing="true"',
+          "html"
+        ) %>%
+        kable_classic(full_width = F, html_font = "Cambria") %>%
+        row_spec(0, italic = T, bold = T) %>%
+        column_spec(1, italic = F, bold = T)
+    )
+  }
 
   return(results)
 }
