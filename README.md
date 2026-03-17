@@ -1,22 +1,22 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# pTRAPING
+# pTRAPPING
 
 <!-- badges: start -->
 
 <!-- badges: end -->
 
-The goal of pTRAPING is to …
+The goal of pTRAPPING is to …
 
 ## Installation
 
-You can install the development version of pTRAPING from
+You can install the development version of pTRAPPING from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
-pak::pak("camilo-rl/pTRAPING")
+pak::pak("camilo-rl/pTRAPPING")
 ```
 
 ## Example
@@ -24,7 +24,7 @@ pak::pak("camilo-rl/pTRAPING")
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-library(pTRAPING)
+library(pTRAPPING)
 ## basic example code
 ```
 

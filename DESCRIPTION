@@ -1,4 +1,4 @@
-Package: pTRAPING
+Package: pTRAPPING
 Title: A Suite of Functions for the Analyses of PhosphoTRAP Data in R
 Version: 0.0.0.9000
 Authors@R: 
@@ -17,5 +17,5 @@ Imports:
     tidyverse,
     readr,
     edgeR
-URL: https://github.com/camilo-rl/pTRAPING
-BugReports: https://github.com/camilo-rl/pTRAPING/issues
+URL: https://github.com/camilo-rl/pTRAPPING
+BugReports: https://github.com/camilo-rl/pTRAPPING/issues
