@@ -109,20 +109,19 @@ ptrap_de <- function(
   gene_ids,
   region_name,
   treatment_name,
-  sample_col    = "sample",
-  fraction_col  = "fraction",
-  block_col     = "tube",
-  region_col    = "BrainRegion",
+  sample_col = "sample",
+  fraction_col = "fraction",
+  block_col = "tube",
+  region_col = "BrainRegion",
   treatment_col = "Treatment",
-  ip_level      = "IP",
-  input_level   = "INPUT",
+  ip_level = "IP",
+  input_level = "INPUT",
   lfc_threshold = 1,
   fdr_threshold = 0.05,
-  test_method   = c("LRT", "QLF"),
-  ngenes.out    = 20,
-  kable.out     = FALSE
+  test_method = c("LRT", "QLF"),
+  ngenes.out = 20,
+  kable.out = FALSE
 ) {
-
   test_method <- match.arg(test_method)
 
   # subset samples for the specified region and treatment
@@ -141,8 +140,15 @@ ptrap_de <- function(
   # validate that the region/treatment combination exists in sample_df
   if (nrow(region_samples) == 0) {
     stop(
-      "No samples found for ", region_col, " = '", region_name, "' and ",
-      treatment_col, " = '", treatment_name, "'. ",
+      "No samples found for ",
+      region_col,
+      " = '",
+      region_name,
+      "' and ",
+      treatment_col,
+      " = '",
+      treatment_name,
+      "'. ",
       "Check that these values exist in `sample_df`."
     )
   }
@@ -185,10 +191,10 @@ ptrap_de <- function(
   lrt_coef <- paste0(fraction_col, ip_level)
 
   if (test_method == "LRT") {
-    fit  <- glmFit(dge, design)
+    fit <- glmFit(dge, design)
     test <- glmLRT(fit, coef = lrt_coef)
   } else {
-    fit  <- glmQLFit(dge, design)
+    fit <- glmQLFit(dge, design)
     test <- glmQLFTest(fit, coef = lrt_coef)
   }
 
@@ -199,10 +205,10 @@ ptrap_de <- function(
   results <- topTags(test, n = Inf)$table %>%
     as_tibble() %>%
     mutate(
-      !!region_col    := region_name,
+      !!region_col := region_name,
       !!treatment_col := treatment_name,
       diffexpressed = case_when(
-        logFC >  lfc_threshold & FDR < fdr_threshold ~ "UP",
+        logFC > lfc_threshold & FDR < fdr_threshold ~ "UP",
         logFC < -lfc_threshold & FDR < fdr_threshold ~ "DOWN",
         TRUE ~ "NO"
       )
