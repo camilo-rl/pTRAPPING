@@ -19,7 +19,9 @@ ptrap_de(
   input_level = "INPUT",
   lfc_threshold = 1,
   fdr_threshold = 0.05,
-  test_method = c("LRT", "QLF")
+  test_method = c("LRT", "QLF"),
+  ngenes.out = 20,
+  kable.out = FALSE
 )
 }
 \arguments{
@@ -71,9 +73,18 @@ differentially expressed. Default is \code{0.05}.}
 ratio test via \code{glmFit} + \code{glmLRT}, default) or \code{"QLF"} (quasi-likelihood
 F-test via \code{glmQLFit} + \code{glmQLFTest}). \code{"QLF"} is generally more
 conservative and recommended when the number of samples per group is small.}
+
+\item{ngenes.out}{Number of top genes (sorted by p-value) to include in the
+output when \code{kable.out = TRUE}. Default is \code{20}.}
+
+\item{kable.out}{Logical. If \code{TRUE}, returns a \code{kableExtra} HTML table of
+the top \code{ngenes.out} genes instead of the full tibble. Requires the
+\code{kableExtra} package. Default is \code{FALSE}.}
 }
 \value{
-A tibble with one row per gene, sorted by p-value, containing:
+When \code{kable.out = FALSE} (default), a tibble with one row per gene,
+sorted by p-value. When \code{kable.out = TRUE}, an HTML \code{kableExtra} table of
+the top \code{ngenes.out} genes. The tibble contains:
 \describe{
 \item{Gene}{Gene identifier from \code{gene_ids}.}
 \item{logFC}{Log2 fold change (IP vs INPUT).}
