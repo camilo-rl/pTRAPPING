@@ -60,7 +60,8 @@
 #'                                  "DE only sol" = "#49a15f"))
 #' }
 #'
-#' @importFrom dplyr select left_join mutate case_when arrange filter
+#' @importFrom dplyr select left_join mutate case_when arrange filter all_of
+#' @importFrom rlang .data :=
 #' @importFrom ggplot2 ggplot aes geom_point geom_abline geom_vline geom_hline
 #'   scale_fill_manual theme_classic labs
 #' @importFrom ggrepel geom_text_repel
@@ -97,11 +98,11 @@ ptrap_volcano2 <- function(
   }
 
   # --- join the two results by gene -------------------------------------------
-  combined <- de_result_1 %>%
-    select(all_of(gene_col), logFC_1 = logFC, padj_1 = FDR) %>%
+  combined <- de_result_1 |>
+    select(all_of(gene_col), logFC_1 = "logFC", padj_1 = "FDR") |>
     left_join(
-      de_result_2 %>%
-        select(all_of(gene_col), logFC_2 = logFC, padj_2 = FDR),
+      de_result_2 |>
+        select(all_of(gene_col), logFC_2 = "logFC", padj_2 = "FDR"),
       by = gene_col
     )
 
@@ -117,27 +118,29 @@ ptrap_volcano2 <- function(
       "condition (likely filtered out by filterByExpr in the other). ",
       "They cannot be placed on a 2D scatter plot."
     )
-    combined <- combined %>%
-      filter(!is.na(logFC_1), !is.na(logFC_2))
+    combined <- combined |>
+      filter(!is.na(.data$logFC_1), !is.na(.data$logFC_2))
   }
 
   # --- classify genes based on significance in each condition -----------------
-  combined <- combined %>%
+  combined <- combined |>
     mutate(
-      sig_1 = !is.na(padj_1) &
-        padj_1 < fdr_threshold &
-        abs(logFC_1) > lfc_threshold,
-      sig_2 = !is.na(padj_2) &
-        padj_2 < fdr_threshold &
-        abs(logFC_2) > lfc_threshold,
+      sig_1 = !is.na(.data$padj_1) &
+        .data$padj_1 < fdr_threshold &
+        abs(.data$logFC_1) > lfc_threshold,
+      sig_2 = !is.na(.data$padj_2) &
+        .data$padj_2 < fdr_threshold &
+        abs(.data$logFC_2) > lfc_threshold
+    ) |>
+    mutate(
       DE_class = case_when(
-        sig_1 & sig_2 ~ class_both,
-        sig_1 & !sig_2 ~ class_only1,
-        !sig_1 & sig_2 ~ class_only2,
+        .data$sig_1 &  .data$sig_2  ~ class_both,
+        .data$sig_1 & !.data$sig_2  ~ class_only1,
+        !.data$sig_1 & .data$sig_2  ~ class_only2,
         TRUE ~ class_none
       )
-    ) %>%
-    arrange(DE_class)
+    ) |>
+    arrange(.data$DE_class)
 
   # --- default title ----------------------------------------------------------
   if (is.null(title)) {
@@ -145,16 +148,16 @@ ptrap_volcano2 <- function(
   }
 
   # --- build plot -------------------------------------------------------------
-  ggplot(combined, aes(x = logFC_2, y = logFC_1)) +
+  ggplot(combined, aes(x = .data$logFC_2, y = .data$logFC_1)) +
     geom_point(
-      data = subset(combined, DE_class == class_none),
+      data = combined[combined$DE_class == class_none, ],
       color = "grey80",
       alpha = 0.5,
       size = point_size
     ) +
     geom_point(
-      data = subset(combined, DE_class != class_none),
-      aes(fill = DE_class),
+      data = combined[combined$DE_class != class_none, ],
+      aes(fill = .data$DE_class),
       alpha = point_alpha,
       size = point_size,
       shape = 21
@@ -170,7 +173,7 @@ ptrap_volcano2 <- function(
     ) +
     scale_fill_manual(values = colors) +
     geom_text_repel(
-      data = subset(combined, DE_class != class_none),
+      data = combined[combined$DE_class != class_none, ],
       aes(label = .data[[gene_col]]),
       size = 3,
       max.overlaps = max_overlaps

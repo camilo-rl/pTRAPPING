@@ -107,6 +107,7 @@ likelihood ratio test (\code{glmLRT}) and the quasi-likelihood F-test
 differential expression results. Optionally returns a \code{kableExtra} HTML table of the top DE genes.
 }
 \examples{
+\dontrun{
 # Default call using LRT
 res_lrt <- ptrap_de(
   counts_mat     = counts_mat,
@@ -136,5 +137,6 @@ res_custom <- ptrap_de(
   lfc_threshold  = 0.5,
   fdr_threshold  = 0.1
 )
+}
 
 }

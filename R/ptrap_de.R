@@ -66,6 +66,7 @@
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' # Default call using LRT
 #' res_lrt <- ptrap_de(
 #'   counts_mat     = counts_mat,
@@ -95,10 +96,12 @@
 #'   lfc_threshold  = 0.5,
 #'   fdr_threshold  = 0.1
 #' )
+#' }
 #'
 #' @importFrom edgeR DGEList filterByExpr calcNormFactors estimateDisp
 #'   glmFit glmLRT glmQLFit glmQLFTest topTags
 #' @importFrom dplyr filter mutate case_when relocate slice_head
+#' @importFrom rlang .data :=
 #' @importFrom tibble as_tibble
 #' @importFrom stats as.formula model.matrix
 #' @importFrom knitr kable
@@ -126,11 +129,11 @@ ptrap_de <- function(
   test_method <- match.arg(test_method)
 
   # subset samples for the specified region and treatment
-  region_samples <- sample_df %>%
+  region_samples <- sample_df |>
     filter(
       .data[[region_col]] == region_name,
       .data[[treatment_col]] == treatment_name
-    ) %>%
+    ) |>
     mutate(
       !!fraction_col := factor(
         .data[[fraction_col]],
@@ -203,30 +206,30 @@ ptrap_de <- function(
   # note: topTags already carries the Gene column from dge$genes, so we do not
   # re-assign it here (doing so would attempt to bind the full unfiltered
   # gene_ids vector, causing a size mismatch error)
-  results <- topTags(test, n = Inf)$table %>%
-    as_tibble() %>%
+  results <- topTags(test, n = Inf)$table |>
+    as_tibble() |>
     mutate(
-      !!region_col := region_name,
+      !!region_col    := region_name,
       !!treatment_col := treatment_name,
       diffexpressed = case_when(
-        logFC > lfc_threshold & FDR < fdr_threshold ~ "UP",
-        logFC < -lfc_threshold & FDR < fdr_threshold ~ "DOWN",
+        .data$logFC >  lfc_threshold & .data$FDR < fdr_threshold ~ "UP",
+        .data$logFC < -lfc_threshold & .data$FDR < fdr_threshold ~ "DOWN",
         TRUE ~ "NO"
       )
-    ) %>%
-    relocate(Gene)
+    ) |>
+    relocate("Gene")
 
   if (kable.out) {
     return(
-      results %>%
-        slice_head(n = ngenes.out) %>%
+      results |>
+        slice_head(n = ngenes.out) |>
         kable(
           digits = 2,
           table.attr = 'data-quarto-disable-processing="true"',
           "html"
-        ) %>%
-        kable_classic(full_width = F, html_font = "Cambria") %>%
-        row_spec(0, italic = T, bold = T) %>%
+        ) |>
+        kable_classic(full_width = F, html_font = "Cambria") |>
+        row_spec(0, italic = T, bold = T) |>
         column_spec(1, italic = F, bold = T)
     )
   }

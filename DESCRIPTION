@@ -11,11 +11,15 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-Depends: R (>= 4.0.0)
-Imports: 
+Depends: R (>= 4.1.0)
+Imports:
     ggrepel,
-    tidyverse,
-    readr,
-    edgeR
+    rlang,
+    edgeR,
+    kableExtra,
+    knitr,
+    ggplot2,
+    dplyr,
+    tibble
 URL: https://github.com/camilo-rl/pTRAPPING, https://camilo-rl.github.io/pTRAPPING/
 BugReports: https://github.com/camilo-rl/pTRAPPING/issues
