@@ -61,7 +61,7 @@
 #' @importFrom dplyr mutate
 #' @importFrom rlang .data
 #' @importFrom ggplot2 ggplot aes geom_point geom_vline geom_hline
-#'   scale_fill_manual theme_classic labs expression
+#'   scale_fill_manual theme_classic labs
 #' @importFrom ggrepel geom_text_repel
 
 ptrap_volcano <- function(
