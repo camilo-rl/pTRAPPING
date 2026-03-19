@@ -2,57 +2,87 @@
 % Please edit documentation in R/ptrap_de.R
 \name{ptrap_de}
 \alias{ptrap_de}
-\title{Perform differential expression analysis for TRAP-seq data using edgeR}
+\title{Perform differential expression analysis for TRAP-seq data using edgeR
+or a paired t-test}
 \usage{
 ptrap_de(
   counts_mat,
-  sample_df,
-  gene_ids,
-  region_name,
-  treatment_name,
+  sample_df = NULL,
+  gene_ids = NULL,
+  region_name = NULL,
+  treatment_name = NULL,
   sample_col = "sample",
   fraction_col = "fraction",
   block_col = "tube",
-  region_col = "BrainRegion",
+  region_col = NULL,
   treatment_col = "Treatment",
   ip_level = "IP",
   input_level = "INPUT",
   lfc_threshold = 1,
   fdr_threshold = 0.05,
-  test_method = c("LRT", "QLF"),
+  test_method = c("LRT", "QLF", "paired.ttest"),
+  pseudocount = 1,
+  return_long = FALSE,
   ngenes.out = 20,
   kable.out = FALSE
 )
 }
 \arguments{
-\item{counts_mat}{A numeric matrix of raw counts with genes as rows and
-samples as columns. Column names must match the values in \code{sample_col}.}
+\item{counts_mat}{A counts matrix in one of two formats:
+\itemize{
+\item \strong{Matrix} — numeric, genes × samples; column names are sample IDs;
+gene IDs are in \code{rownames} or supplied via \code{gene_ids}.
+\item \strong{Data frame / tibble} — first column is a character vector of gene
+IDs; remaining columns are numeric counts with sample names as column
+names. When \code{sample_df = NULL}, column names must follow the naming
+convention described in the \emph{Automatic column-name parsing} section.
+}}
 
-\item{sample_df}{A data frame containing sample metadata. Must include
-columns for sample names, IP/INPUT fraction, block variable, brain region,
-and treatment condition.}
+\item{sample_df}{Optional data frame of sample metadata. When \code{NULL}
+(default), metadata is parsed automatically from the column names of
+\code{counts_mat}. When provided, the arguments \code{sample_col}, \code{fraction_col},
+\code{block_col}, \code{region_col}, and \code{treatment_col} specify which columns to
+use (falling back to their defaults if the names match).}
 
-\item{gene_ids}{A character vector of gene identifiers corresponding to the
-rows of \code{counts_mat}.}
+\item{gene_ids}{Optional character vector of gene identifiers corresponding
+to the rows of \code{counts_mat}. When \code{NULL} (default), gene IDs are
+extracted from the first column of \code{counts_mat} (if it is a data frame)
+or from \code{rownames(counts_mat)} (if it is a matrix).}
 
 \item{region_name}{The brain region to subset and analyze (e.g., \code{"POA"}).
-Must match a value in \code{region_col}.}
+Only used when \code{region_col} is not \code{NULL}. Can be \code{NULL} when
+\code{region_col = NULL} (default) or when the data contain a single region.}
 
-\item{treatment_name}{The treatment condition to subset and analyze (e.g.,
-\code{"pb"}). Must match a value in \code{treatment_col}.}
+\item{treatment_name}{The treatment condition whose samples will be
+\strong{subsetted} for the IP vs INPUT comparison (e.g., \code{"pb"} to analyse
+only the pair-bonded samples). Note that \code{treatment_name} is \strong{not} the
+DE contrast variable — the contrast is always IP vs INPUT. To compare two
+treatments you call \code{ptrap_de()} once per treatment and then pass both
+results to \code{\link[=ptrap_volcano2]{ptrap_volcano2()}}.
+
+When \code{NULL} (default), the value is derived automatically from
+\code{sample_df} (or from the parsed column names when \code{sample_df = NULL}):
+if a single treatment is found the function proceeds silently; if
+multiple treatments are found an error asks the user to specify which
+one to analyse.}
 
 \item{sample_col}{Name of the column in \code{sample_df} whose values match the
-column names of \code{counts_mat}. Default is \code{"sample"}.}
+column names of \code{counts_mat}. Ignored when \code{sample_df = NULL} (auto-set
+internally). Default is \code{"sample"}.}
 
 \item{fraction_col}{Name of the column in \code{sample_df} that distinguishes IP
 from INPUT fractions. Default is \code{"fraction"}.}
 
 \item{block_col}{Name of the column in \code{sample_df} used as the blocking /
-pairing variable in the design matrix (e.g., individual animal or tube).
-Default is \code{"tube"}.}
+pairing variable (e.g., individual animal or tube). For \code{"LRT"} / \code{"QLF"}
+it enters the design matrix; for \code{"paired.ttest"} it aligns each
+animal's IP with its own INPUT. Default is \code{"tube"}.}
 
 \item{region_col}{Name of the column in \code{sample_df} containing brain region
-labels. Default is \code{"BrainRegion"}.}
+labels. Set to \code{NULL} (default) to skip region filtering — recommended
+when the data already contain only one brain region. Only set this when
+\code{counts_mat} contains multiple regions and you want to analyze one at a
+time. Default is \code{NULL}.}
 
 \item{treatment_col}{Name of the column in \code{sample_df} containing treatment
 labels. Default is \code{"Treatment"}.}
@@ -61,54 +91,122 @@ labels. Default is \code{"Treatment"}.}
 Default is \code{"IP"}.}
 
 \item{input_level}{The value in \code{fraction_col} that identifies the INPUT
-fraction (used as the reference level). Default is \code{"INPUT"}.}
+fraction (reference level). Default is \code{"INPUT"}.}
 
 \item{lfc_threshold}{Minimum absolute log2 fold change required to classify
 a gene as differentially expressed. Default is \code{1}.}
 
-\item{fdr_threshold}{Maximum FDR allowed to classify a gene as
-differentially expressed. Default is \code{0.05}.}
+\item{fdr_threshold}{Maximum FDR (or adjusted p-value for
+\code{"paired.ttest"}) allowed to classify a gene as differentially expressed.
+Default is \code{0.05}.}
 
-\item{test_method}{The GLM testing method to use. Either \code{"LRT"} (likelihood
-ratio test via \code{glmFit} + \code{glmLRT}, default) or \code{"QLF"} (quasi-likelihood
-F-test via \code{glmQLFit} + \code{glmQLFTest}). \code{"QLF"} is generally more
-conservative and recommended when the number of samples per group is small.}
+\item{test_method}{Statistical method to use. One of:
+\itemize{
+\item \code{"LRT"} — likelihood ratio test via \code{glmFit} + \code{glmLRT} (default).
+Suitable for ≥ 4 replicates and raw count data.
+\item \code{"QLF"} — quasi-likelihood F-test via \code{glmQLFit} + \code{glmQLFTest}.
+More conservative than LRT; recommended for small sample sizes with
+raw count data.
+\item \code{"paired.ttest"} — per-gene paired t-test between IP and INPUT across
+replicates, following Tan et al. (2016)
+\doi{10.1016/j.cell.2016.08.028}. Best suited for n = 3 replicates
+typical of PhosphoTRAP experiments. P-values are adjusted with
+Benjamini-Hochberg. The enrichment ratio per paired sample (IP/INPUT)
+is expressed on a log2 scale.
+}}
+
+\item{pseudocount}{A small value added to counts before computing
+log2(IP/INPUT) in \code{"paired.ttest"}, to avoid log(0). Default is \code{1}.
+Set to \code{0} if \code{counts_mat} already contains normalised values (e.g.,
+RPKM/TPM) that are guaranteed to be > 0.}
+
+\item{return_long}{Logical. Only used when \code{test_method = "paired.ttest"}.
+If \code{TRUE}, returns a named list with \verb{$results} (the DE tibble) and
+\verb{$long_data} (the per-gene, per-animal paired table used for the test).
+Default is \code{FALSE}.}
 
 \item{ngenes.out}{Number of top genes (sorted by p-value) to include in the
 output when \code{kable.out = TRUE}. Default is \code{20}.}
 
 \item{kable.out}{Logical. If \code{TRUE}, returns a \code{kableExtra} HTML table of
-the top \code{ngenes.out} genes instead of the full tibble. Requires the
-\code{kableExtra} package. Default is \code{FALSE}.}
+the top \code{ngenes.out} genes instead of the full tibble. Default is
+\code{FALSE}.}
 }
 \value{
-When \code{kable.out = FALSE} (default), a tibble with one row per gene,
-sorted by p-value. When \code{kable.out = TRUE}, an HTML \code{kableExtra} table of
-the top \code{ngenes.out} genes. The tibble contains:
-\describe{
-\item{Gene}{Gene identifier from \code{gene_ids}.}
-\item{logFC}{Log2 fold change (IP vs INPUT).}
-\item{logCPM}{Average log2 counts per million.}
-\item{LR / F}{Test statistic (name depends on \code{test_method}).}
-\item{PValue}{Raw p-value.}
-\item{FDR}{Benjamini-Hochberg adjusted p-value.}
-\item{BrainRegion / region_col}{Brain region label.}
-\item{Treatment / treatment_col}{Treatment label.}
-\item{diffexpressed}{\code{"UP"}, \code{"DOWN"}, or \code{"NO"} based on
-\code{lfc_threshold} and \code{fdr_threshold}.}
-}
+When \code{kable.out = FALSE} (default), a tibble with one row per gene
+sorted by p-value, containing \code{Gene}, \code{logFC}, test-statistic column(s),
+\code{PValue}, \code{FDR}, treatment label, optionally a region label (when
+\code{region_col} is set), and \code{diffexpressed} (\code{"UP"}, \code{"DOWN"}, \code{"NO"}).
+When \code{kable.out = TRUE}, an HTML \code{kableExtra} table of the top
+\code{ngenes.out} genes. For \code{"paired.ttest"} with \code{return_long = TRUE}, a
+named list with \verb{$results} and \verb{$long_data}.
 }
 \description{
-Compares IP vs INPUT fractions for a specified brain region and treatment
-condition using edgeR's GLM framework. Accounts for paired structure via a
-block variable (e.g., individual animal or tube). Supports both the
-likelihood ratio test (\code{glmLRT}) and the quasi-likelihood F-test
-(\code{glmQLFTest}) for the final hypothesis testing step. Returns a tibble of
-differential expression results. Optionally returns a \code{kableExtra} HTML table of the top DE genes.
+Compares IP vs INPUT fractions for a specified treatment condition using
+one of three statistical approaches (see \code{test_method}). Both \code{sample_df}
+and \code{gene_ids} are optional: the function can derive sample metadata
+automatically from the column names of \code{counts_mat}, and gene identifiers
+from its first column.
 }
+\details{
+\itemize{
+\item \code{"LRT"} and \code{"QLF"} use edgeR's GLM framework, account for the paired
+animal structure via a block variable, and are recommended when you have
+\strong{4 or more replicates} and raw count data.
+\item \code{"paired.ttest"} runs a per-gene \strong{paired t-test} between IP and INPUT
+counts across experimental repeats, following the method described in
+Tan et al. (2016) \emph{Cell} 167, 47–59
+\doi{10.1016/j.cell.2016.08.028}. This approach is recommended when you
+have \strong{only 3 replicates} (as is the typical minimum in PhosphoTRAP
+experiments), where GLM-based dispersion estimates are unreliable. The
+enrichment ratio (IP / INPUT) is computed per paired sample and expressed
+on the log2 scale, as described in the same paper. \strong{Note:} if you pass
+normalised values (e.g., RPKM/TPM) instead of raw counts, set
+\code{pseudocount = 0}.
+}
+}
+\section{Automatic column-name parsing}{
+
+When \code{sample_df = NULL}, the column names of \code{counts_mat} (excluding the
+first, gene-ID column) are parsed to build sample metadata automatically.
+Each column name must encode three pieces of information, in any order and
+with any combination of separators (\verb{_}, \code{-}, \code{.}, space) or no separator
+at all:
+\describe{
+\item{Treatment}{One or more letters identifying the experimental group.}
+\item{Replicate number}{A digit identifying the biological replicate.}
+\item{Fraction}{\code{ip_level} or \code{input_level} (case-insensitive); \code{"in"}
+is also accepted as a short alias for the INPUT fraction.}
+}
+Valid column name examples (default \code{ip_level = "IP"},
+\code{input_level = "INPUT"}):
+\tabular{ll}{
+\strong{Column name} \tab \strong{Parsed as} \cr
+\code{b1input}, \code{b1ip}    \tab treatment = \code{b}, block = \code{1} \cr
+\code{nb2INPUT}           \tab treatment = \code{nb}, block = \code{2} \cr
+\code{Nb_IP_1}            \tab treatment = \code{Nb}, block = \code{1} \cr
+\code{B_3_INPUT}          \tab treatment = \code{B}, block = \code{3} \cr
+\code{PB.2.ip}            \tab treatment = \code{PB}, block = \code{2} \cr
+\code{Trim_10-INPUT}      \tab treatment = \code{Trim}, block = \code{10} \cr
+\code{SOL1INPUT}          \tab treatment = \code{SOL}, block = \code{1} \cr
+}
+}
+
 \examples{
 \dontrun{
-# Default call using LRT
+## ---- Option A: simplest call — auto-parse from column names ---------------
+# counts_mat is a data frame where:
+#   col 1      = gene IDs
+#   col 2+     = samples named like "b1input", "b1ip", "nb2input", etc.
+counts <- read.table("counts.txt", header = TRUE)
+
+# single treatment in the matrix — treatment_name auto-detected
+res <- ptrap_de(counts_mat = counts, test_method = "paired.ttest")
+
+# multiple treatments — specify which one to analyze
+res_b <- ptrap_de(counts_mat = counts, treatment_name = "b")
+
+## ---- Option B: provide sample_df explicitly (original workflow) -----------
 res_lrt <- ptrap_de(
   counts_mat     = counts_mat,
   sample_df      = sample_df,
@@ -117,7 +215,7 @@ res_lrt <- ptrap_de(
   treatment_name = "pb"
 )
 
-# Using the quasi-likelihood F-test instead
+# quasi-likelihood F-test
 res_qlf <- ptrap_de(
   counts_mat     = counts_mat,
   sample_df      = sample_df,
@@ -127,16 +225,24 @@ res_qlf <- ptrap_de(
   test_method    = "QLF"
 )
 
-# Custom thresholds
-res_custom <- ptrap_de(
+# paired t-test — also return long-format paired table
+res_pt <- ptrap_de(
   counts_mat     = counts_mat,
   sample_df      = sample_df,
   gene_ids       = gene_ids,
   region_name    = "POA",
   treatment_name = "pb",
-  lfc_threshold  = 0.5,
-  fdr_threshold  = 0.1
+  test_method    = "paired.ttest",
+  return_long    = TRUE
 )
+res_pt$results    # DE tibble
+res_pt$long_data  # per-gene, per-animal pairs
 }
 
+}
+\references{
+Tan, C.L., Cooke, E.K., Leib, D.E., Lin, Y.C., Daly, G.E., Zimmerman,
+C.A., and Knight, Z.A. (2016). Warm-Sensitive Neurons that Control Body
+Temperature. \emph{Cell} 167, 47–59.
+\doi{10.1016/j.cell.2016.08.028}
 }

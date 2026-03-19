@@ -21,6 +21,7 @@ Imports:
     knitr,
     ggplot2,
     dplyr,
-    tibble
+    tibble,
+    readr
 URL: https://github.com/camilo-rl/pTRAPPING, https://camilo-rl.github.io/pTRAPPING/
 BugReports: https://github.com/camilo-rl/pTRAPPING/issues
